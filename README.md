@@ -3,7 +3,7 @@
 iTunes Search API ile `software` araması yapan, sonuçlardaki tüm screenshot'ları indirip grid'de listeleyen UIKit uygulaması.
 
 ## Özellikler
-- Search bar'lı collection view, yazdıkça arama (0.5 sn debounce)
+- Search bar'lı collection view, yazdıkça arama (0.3 sn debounce)
 - Her sonucun `screenshotUrls` içindeki tüm imajlar indirilir
 - Aynı anda en fazla **3** indirme (`OperationQueue.maxConcurrentOperationCount = 3`)
 - İndirme ve decode arka planda, UI kilitlenmez
@@ -15,15 +15,27 @@ iTunes Search API ile `software` araması yapan, sonuçlardaki tüm screenshot'l
 
 ## Mimari
 
-```
-SearchViewController ──► SearchInteractor ──► SearchPresenter
-        ▲                    │                       │
-        │                    ▼                       │
-        │        SearchWorker / ImageDownloadWorker  │
-        └──────────────── (weak) ◄───────────────────┘
+Veri akışı tek yönlüdür (Clean Swift / VIP):
 
-SearchRouter ──► PreviewViewController
 ```
+SearchViewController ──Request──► SearchInteractor ──Response──► SearchPresenter
+         ▲                              │                              │
+         │                              ▼                              │
+         │                 SearchWorker, ImageDownloadWorker           │
+         │                  (arama ve imaj indirme burada)             │
+         └─────────────────────── ViewModel ◄──────────────────────────┘
+```
+
+Ekran geçişi ayrı akıştır:
+
+```
+SearchViewController ──routeToPreview()──► SearchRouter ──► PreviewViewController
+                                               │
+                                               └─ SearchInteractor'ın seçili imajını (DataStore) Preview'a aktarır
+```
+
+- Döngüyü (VC → Interactor → Presenter → VC) kırmak için Presenter'ın ViewController referansı `weak`'tir.
+- Parçaları `SearchConfigurator` oluşturup birbirine bağlar.
 
 | Katman | Görevi |
 |---|---|
@@ -46,7 +58,7 @@ SearchRouter ──► PreviewViewController
 - **`preparingForDisplay()`**: İmaj decode'u arka planda yapılır, scroll sırasında takılma olmaz.
 - **Base networking katmanı**: Status code kontrolü, decode ve main thread'e dönüş `NetworkClient`'ta bir kez yazıldı; yeni endpoint için sadece `Endpoint`'e uyan bir struct eklenir. Resim indirme JSON olmadığı ve kendi kuyruğu olduğu için bu katmanı kullanmaz.
 - **Düz grid**: Tüm screenshot'lar tek listeye düzleştirildi (`asScreenshotURLs()`).
-- **Lokalizasyon**: Kullanıcıya görünen tüm metinler `tr.lproj/Localizable.strings` içinde; kodda `Strings.searchTitle.localized()` şeklinde kullanılır. `Strings` enum'u elle yazıldı (R.swift gibi 3rd party yok), her anahtarın çevirisi olduğu unit test ile doğrulanır.
+- **Lokalizasyon**: Kullanıcıya görünen tüm metinler `tr.lproj/Localizable.strings` içinde; kodda `Strings.searchTitle.localized()` şeklinde kullanılır. `Strings` enum'u elle yazıldı (R.swift gibi 3rd party yok).
 
 ## Gereksinimler
 - Xcode 26+, iOS 15.0+
