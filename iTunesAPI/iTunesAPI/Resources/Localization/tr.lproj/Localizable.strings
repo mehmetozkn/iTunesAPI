@@ -1,0 +1,16 @@
+/*
+  Localizable.strings
+  iTunesAPI
+
+  Created by Mehmet Özkan on 9.11.2026.
+*/
+
+// MARK: - Search
+"searchTitle" = "Uygulama Ara";
+"searchPlaceholder" = "Uygulama ara";
+"searchEmptyTermMessage" = "Uygulama aramak için yazmaya başlayın.";
+"searchNoResultMessage" = "Sonuç bulunamadı.";
+"searchErrorMessage" = "Bir hata oluştu, lütfen tekrar deneyin.";
+
+// MARK: - Preview
+"previewClose" = "Kapat";
